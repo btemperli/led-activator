@@ -10,6 +10,7 @@ Install all used `pip`-libraries:
 ```
 $ ../../python-venv/bin/pip install requests
 $ ../../python-venv/bin/pip install RPi.GPIO
+$ ../../python-venv/bin/pip install gpiozero
 $ ../../python-venv/bin/pip install python-dotenv
 ```
 

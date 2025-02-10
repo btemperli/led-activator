@@ -5,6 +5,7 @@ import threading
 import time
 import os
 
+from datetime import datetime
 from gpiozero import MotionSensor
 from dotenv import load_dotenv
 
@@ -35,6 +36,28 @@ pir_left = MotionSensor(PIR_LEFT_PIN)
 pir_right = MotionSensor(PIR_RIGHT_PIN)
 
 
+def prnt(nachricht, log_to_file=False):
+    print(nachricht)
+    if log_to_file:
+        log_datei = "log.txt"
+        zeitstempel = datetime.now().strftime("%Y-%m-%d %H:%M")
+        neue_zeile = f"{zeitstempel} | {nachricht}\n"
+
+        if os.path.exists(log_datei):
+            with open(log_datei, "r", encoding="utf-8") as f:
+                zeilen = f.readlines()
+        else:
+            zeilen = []
+
+        zeilen.insert(0, neue_zeile)
+
+        if len(zeilen) > 200:
+            zeilen.pop()
+
+        with open(log_datei, "w", encoding="utf-8") as f:
+            f.writelines(zeilen)
+
+
 def reset_timer():
     global movement_timer
     if movement_timer is not None:
@@ -55,11 +78,11 @@ def movement_right():
 
 def movement_callback(name):
     global led_is_active
-    print(f"movement on {name}")
+    prnt(f"movement on {name}")
 
     if not led_is_active:
         led_is_active = True
-        print(led_is_active)
+        prnt(f"movement on {name}. activate LED.", True)
         activate_led()
         reset_timer()
 
@@ -73,48 +96,49 @@ def stop_movement():
 
 
 def api_call_get(url):
-    print(f"Calling {url} with GET")
+    prnt(f"Calling {url} with GET")
     response = requests.get(url, headers=HEADERS)
-    print(response.status_code)
+    prnt(response.status_code)
 
     if response.status_code != 200:
-        print('-------------------')
-        print('Error GET Response:')
-        print(response.text)
-        print(response)
+        prnt('-------------------')
+        prnt('Error GET Response:', True)
+        prnt(response.text, True)
+        prnt(response)
 
     return response
 
 
 def api_call_post(url):
-    print(f"Calling {url} with POST")
+    prnt(f"Calling {url} with POST")
     response = requests.post(url, headers=HEADERS)
-    print(response.status_code)
+    prnt(response.status_code)
     if response.status_code != 200:
-        print('-------------------')
-        print('Error POST Response:')
-        print(response.text)
-        print(response)
+        prnt('-------------------')
+        prnt('Error POST Response:', True)
+        prnt(response.text, True)
+        prnt(response)
     return response
 
 
 def test_api():
     response = api_call_get(URL_STATES_LED)
-    print(response.text)
+    prnt(response.text)
 
 
 def activate_led():
-    print("ACTIVATING LED")
+    # prnt("ACTIVATING LED")
     api_call_post(URL_ACTIVATE_LED)
 
 
 def deactivate_led():
-    print("DEACTIVATING LED")
-    print("-----")
+    prnt(f"no movement. deactivate LED.", True)
+
     api_call_post(URL_DEACTIVATE_LED)
 
 
 if __name__ == '__main__':
+    prnt("start program.", True)
     test_api()
 
     try:
@@ -124,4 +148,4 @@ if __name__ == '__main__':
         while True:
             time.sleep(100)
     except KeyboardInterrupt:
-        print("Beende...")
+        prnt("quit program: KeyboardInterrupt", True)
